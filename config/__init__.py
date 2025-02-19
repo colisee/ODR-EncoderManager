@@ -954,7 +954,7 @@ class Config():
 
                 # audio gain for alsa or stream or aes input type only
                 if ( odr['source']['type'] == 'alsa' or odr['source']['type'] == 'stream' or odr['source']['type'] == 'aes67' ) and odr['source']['audio_gain'] != '':
-                    command += ' -g %s\n' % (odr['source']['audio_gain'])
+                    command += ' --audio-gain=%s\n' % (odr['source']['audio_gain'])
 
                 # bitrate, samplerate, channels for all input type
                 command += ' --bitrate=%s\n' % (odr['output']['bitrate'])
