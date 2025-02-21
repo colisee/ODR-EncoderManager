@@ -84,11 +84,11 @@
     "global": {
         "daemon": false,
         "max_encoder_instance": 10,
-        "logs_directory": "/home/odr/ODR-EncoderManager/logs/",
+        "logs_directory": "/home/odr/.state/log/",
         "supervisor_xmlrpc": "http://user:pass@127.0.0.1:8900/RPC2",
-        "static_directory": "/home/odr/ODR-EncoderManager/static/",
+        "static_directory": "/home/odr/odr-encodermanager/static/",
         "host": "0.0.0.0",
-        "supervisor_file": "/home/odr/ODR-EncoderManager/supervisor-encoder.conf",
+        "supervisor_file": "/home/odr/.config/supervisor/odr-encoders.conf",
         "supervisor_additional_processes": [],
         "port": 8080
     },

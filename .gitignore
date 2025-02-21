@@ -1,8 +1,2 @@
-# Auto generated files
-supervisor-encoder.conf
-
-# logs file
-logs/*
-
 # Compiled source
 *.pyc

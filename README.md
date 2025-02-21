@@ -30,34 +30,90 @@ OpenDigitalRadio Encoder Manager is a tools to run and configure ODR Encoder eas
 
 # INSTALLATION
 
-  * (root) Install requirement (debian/stretch) : `apt install python3-cherrypy3 python3-jinja2 python3-serial python3-yaml supervisor python3-pysnmp4`
-  * (root) Add odr user : `adduser odr`
-  * (root) Add odr user to dialout group : `usermod -a -G dialout odr`
-  * (root) Add odr user to audio group : `usermod -a -G audio odr`
-  * (user) Got to odr user home : `cd /home/odr/`
-  * (user) Clone git repository : `git clone https://github.com/YoannQueret/ODR-EncoderManager.git`
-  * (user) Rename sample config : `mv /home/odr/ODR-EncoderManager/config.json.sample /home/odr/ODR-EncoderManager/config.json`
-  * (root) Make the symlink: `ln -s /home/odr/ODR-EncoderManager/supervisor-encoder.conf /etc/supervisor/conf.d/odr-encoder.conf`
-  * (root) Make the symlink: `ln -s /home/odr/ODR-EncoderManager/supervisor-gui.conf /etc/supervisor/conf.d/odr-gui.conf`
-  * (root) Edit `/etc/supervisor/supervisord.conf` and add this section :
-```
-[inet_http_server]
-port = 8900
-username = user ; Auth username
-password = pass ; Auth password
-```
-  * (root) Restart supervisor : `/etc/init.d/supervisor restart`
-  * (root) Start WEB server : `supervisorctl reread; supervisorctl update ODR-encoderManager`
-  * Go to : `http://<ip_address>:8080`
+  * (root) Add user `odr`:
+    ```
+    sudo useradd \
+      --create-home \
+      --groups dialout,audio \
+      odr
+    ```
+  * (root) Set the password for user `odr`:
+    ```
+    sudo passwd odr
+    ```
+  * (odr) Create the following directories:
+    ```
+    mkdir --parent $HOME/.config/supervisor
+    mkdir --parent $HOME/.config/odr
+    mkdir --parent $HOME/.state/log
+    ```
+  * (odr) Clone this git repository:
+    ```
+    cd $HOME
+    git clone https://github.com/opendigitalradio/odr-encodermanager
+    ```
+  * (odr) Add odr-encodermanager to supervisor:
+    ```
+    cp \
+      $HOME/odr-encodermanager/supervisor-gui.conf \
+      $HOME/.config/supervisor/odr-encodermanager.conf
+    ```
+  * (odr) Set odr-encodermanager configuration file:
+    ```
+    cp \
+      $HOME/odr-encodermanager/config.json.sample \
+      $HOME/.config/odr/odr-encodermanager.json
+    ```
+  * (root) Update your system (debian):
+    ```
+    apt update
+    apt upgrade
+    ```
+  * (root) Install requirement (debian):
+    ```
+    apt install \
+      python3-cherrypy3 \
+      python3-jinja2 \
+      python3-pysnmp4 \
+      python3-serial \
+      python3-yaml \
+      supervisor
+    ```
+  * (root) Setup the supervisor internet server:
+    ```
+    if ! [ $(grep inet_http_server /etc/supervisor/supervisord.conf) ]
+    then cat << EOF | tee -a /etc/supervisor/supervisord.conf
+
+    [inet_http_server]
+    port = 8900
+    username = user
+    password = pass
+    EOF
+
+    fi
+    ```
+  * (root) Update files to include:
+    ```
+    if ! [ $(grep /home/odr/.config /etc/supervisor/supervisord.conf) ]
+    then sed \
+      -i /etc/supervisor/supervisord.conf \
+      -e "s:\(files .*$\):\1\nfiles = /home/odr/.config/supervisor/*.conf:"
+    fi
+    ```
+  * (root) Restart `supervisor`:
+    ```
+    systemctl restart supervisor.service
+    ```
+  * point your web browser to : `http://<ip_address>:8080`
   * Login with user `joe` and password `secret` 
-
-
 
 # CONFIGURATION
   * You can edit global configuration, in particular path in this files :
-    * config.json
-    * supervisor-gui.conf
-  * If you want to change supervisor XMLRPC login/password, you need to edit `/etc/supervisor/supervisord.conf` and `config.json` files
+    * /home/odr/.config/odr/odr-encodermanager.json
+    * /home/odr/.config/supervisor/odr-encodermanager.conf
+  * If you want to change supervisor XMLRPC login/password, you need to edit these files:
+    * /etc/supervisor/supervisord.conf
+    * /home/odr/.config/odr/odr-encodermanager.json
 
 
 # How to set DLS / DL+ / SLS
