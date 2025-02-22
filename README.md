@@ -29,48 +29,51 @@ OpenDigitalRadio Encoder Manager is a tools to run and configure ODR Encoder eas
 
 
 # INSTALLATION
-
-  * (root) Add user `odr`:
+Please, run the following instructions as `root`
+  * Add user __odr__:
     ```
-    sudo useradd \
+    useradd \
       --create-home \
       --groups dialout,audio \
       odr
     ```
-  * (root) Set the password for user `odr`:
+  * Set the password for user __odr__:
     ```
-    sudo passwd odr
+    passwd odr
     ```
-  * (odr) Create the following directories:
+  * Create the following directories for user __odr__:
     ```
-    mkdir --parent $HOME/.config/supervisor
-    mkdir --parent $HOME/.config/odr
-    mkdir --parent $HOME/.state/log
+    mkdir --parent /home/odr/.config/supervisor
+    mkdir --parent /home/odr/.state/log
     ```
-  * (odr) Clone this git repository:
+  * Clone this git repository:
     ```
-    cd $HOME
+    cd /home/odr
     git clone https://github.com/opendigitalradio/odr-encodermanager
     ```
-  * (odr) Add odr-encodermanager to supervisor:
+  * Add odr-encodermanager to supervisor:
     ```
-    cp \
-      $HOME/odr-encodermanager/supervisor-gui.conf \
-      $HOME/.config/supervisor/odr-encodermanager.conf
+    cat << EOF | tee /home/odr/.config/supervisor/odr-encodermanager.conf
+    [program:odr-encoderManager]
+    command=python3 run.py -c /home/odr/.config/odr/odr-encodermanager.json
+    directory=/home/odr/odr-encodermanager/
+    autostart=true
+    autorestart=true
+    priority=10
+    user=odr
+    group=odr
+    redirect_stderr=true
+    stdout_logfile=/home/odr/.state/log/odr-encodermanager.log
+    EOF
     ```
-  * (odr) Set odr-encodermanager configuration file:
+  * Grant ownership to odr:
     ```
-    cp \
-      $HOME/odr-encodermanager/config.json.sample \
-      $HOME/.config/odr/odr-encodermanager.json
+    chown --recursive odr:odr /home/odr
     ```
-  * (root) Update your system (debian):
+  * Install requirement (debian):
     ```
     apt update
     apt upgrade
-    ```
-  * (root) Install requirement (debian):
-    ```
     apt install \
       python3-cherrypy3 \
       python3-jinja2 \
@@ -79,7 +82,7 @@ OpenDigitalRadio Encoder Manager is a tools to run and configure ODR Encoder eas
       python3-yaml \
       supervisor
     ```
-  * (root) Setup the supervisor internet server:
+  * Setup the supervisor internet server:
     ```
     if ! [ $(grep inet_http_server /etc/supervisor/supervisord.conf) ]
     then cat << EOF | tee -a /etc/supervisor/supervisord.conf
@@ -92,20 +95,18 @@ OpenDigitalRadio Encoder Manager is a tools to run and configure ODR Encoder eas
 
     fi
     ```
-  * (root) Update files to include:
+  * Update files supervisor should monitor:
     ```
     if ! [ $(grep /home/odr/.config /etc/supervisor/supervisord.conf) ]
     then sed \
       -i /etc/supervisor/supervisord.conf \
-      -e "s:\(files .*$\):\1\nfiles = /home/odr/.config/supervisor/*.conf:"
+      -e "s:\(files .*$\):\1 /home/odr/.config/supervisor/*.conf:"
     fi
     ```
-  * (root) Restart `supervisor`:
+  * Restart `supervisor`:
     ```
     systemctl restart supervisor.service
     ```
-  * point your web browser to : `http://<ip_address>:8080`
-  * Login with user `joe` and password `secret` 
 
 # CONFIGURATION
   * You can edit global configuration, in particular path in this files :
@@ -115,6 +116,9 @@ OpenDigitalRadio Encoder Manager is a tools to run and configure ODR Encoder eas
     * /etc/supervisor/supervisord.conf
     * /home/odr/.config/odr/odr-encodermanager.json
 
+# RUN
+  * point your web browser to : `http://<ip_address>:8080`
+  * Login with user `joe` and password `secret` 
 
 # How to set DLS / DL+ / SLS
 **Set DLS / DL+ for all encoder**

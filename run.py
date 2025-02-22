@@ -3,6 +3,7 @@
 
 """
 Copyright (C) 2020 Yoann QUERET <yoann@queret.net>
+Copyright (C) 2025 Robin Alexander <robin.alexander@netplus.ch>
 """
 
 """
@@ -140,8 +141,7 @@ if __name__ == '__main__':
     if os.path.isfile(cli_args.config) and os.access(cli_args.config, os.R_OK):
         print("Use configuration file %s" % cli_args.config)
     else:
-        print("Configuration file is missing or is not readable - %s" % cli_args.config)
-        sys.exit(1)
+        print("Create configuration file - %s" % cli_args.config)
 
     # Load configuration
     config = Config(cli_args.config)

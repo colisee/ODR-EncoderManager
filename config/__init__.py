@@ -3,6 +3,7 @@
 
 """
 Copyright (C) 2020 Yoann QUERET <yoann@queret.net>
+Copyright (C) 2025 Robin Alexander <robin.alexander@netplus.ch>
 """
 
 """
@@ -22,7 +23,6 @@ You should have received a copy of the GNU General Public License
 along with ODR-EncoderManager.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-#import ConfigParser
 import os
 import select
 import sys
@@ -32,14 +32,13 @@ import socket
 import yaml
 import uuid
 import time
-
 import importlib
+import configparser
 
 if sys.version_info >= (3, 0):
     from xmlrpc import client as xmlrpc_client
 else:
     import xmlrpclib as xmlrpc_client
-
 
 
 def is_network(config_file):
@@ -67,13 +66,51 @@ def is_slide_mgnt(config_file):
         return False
 
 class Config():
+    def _createConfig(self):
+        staticDir = os.path.join(os.getcwd(), 'static')
+        logDir = os.path.join(os.path.expanduser('~'), '.state/log')
+        if not os.path.exists(logDir):
+            os.makedirs(logDir, 0o755)
+        odrConfDir = os.path.join(os.path.expanduser('~'), '.config/odr')
+        if not os.path.exists(odrConfDir):
+            os.makedirs(odrConfDir, 0o755)
+        supConfDir = os.path.join(os.path.expanduser('~'), '.config/supervisor')
+        if not os.path.exists(supConfDir):
+            os.makedirs(supConfDir, 0o755)
+        supEncoders = os.path.join(supConfDir, 'supervisor-encoder.conf')
+
+        sup = configparser.ConfigParser(inline_comment_prefixes=('#', ';'))
+        sup.read('/etc/supervisor/supervisord.conf')
+        supUser = sup.get('inet_http_server', 'username')
+        supPwd = sup.get('inet_http_server', 'password')
+        supPort = sup.get('inet_http_server', 'port')
+        supUrl = 'http://{}:{}@localhost:{}/RPC2'.format(supUser, supPwd, supPort)
+
+        conf = {}
+        conf['global'] = {}
+        conf['global'].update({'daemon': False})
+        conf['global'].update({'host': '0.0.0.0'})
+        conf['global'].update({'port': 8080})
+        conf['global'].update({'logs_directory': logDir})
+        conf['global'].update({'static_directory': staticDir})
+        conf['global'].update({'supervisor_xmlrpc': supUrl})
+        conf['global'].update({'supervisor_file': supEncoders})
+        conf['auth'] = {'users': {}}
+        conf['auth']['users'] = []
+        conf['auth']['users'].append({'username': supUser, 'password': supPwd})
+        conf['odr'] = []
+        return conf
+
     def __init__(self, config_file):
         self.config_file = config_file
         self.load(config_file)
 
     def load(self, config_file):
-        with open(self.config_file) as data_file:
-            self.config = json.load(data_file)
+        try:
+            with open(self.config_file) as data_file:
+                self.config = json.load(data_file)
+        except:
+            self.config = self._createConfig()
 
     ## Plugins
     def initPlugins(self):
